@@ -1,9 +1,10 @@
-import { StatusBar } from "expo-status-bar";
 import pahoMqtt from "paho-mqtt";
 import { useEffect, useState } from "react";
 import {
+  ScrollView,
   StyleSheet,
   Text,
+  StatusBar,
   TextInput,
   TouchableOpacity,
   View,
@@ -16,7 +17,13 @@ const client = new pahoMqtt.Client(
 
 export default function App() {
   const [newTopic, setNewTopic] = useState("");
-  const [subscribedTopics, setSubscribedTopics] = useState([]);
+  const [subscribedTopics, setSubscribedTopics] = useState([
+    { name: "hc/temp", messages: [] },
+    { name: "hc/freq", messages: [] },
+    { name: "hc/steps", messages: [] },
+    { name: "hc/o2", messages: [] },
+    { name: "hc/pres", messages: [] },
+  ]);
   const onMessage = (data) => {
     console.log(subscribedTopics);
     const foundIndex = subscribedTopics.findIndex(
@@ -25,7 +32,11 @@ export default function App() {
     console.log(foundIndex);
     if (foundIndex != -1) {
       const cpy = [...subscribedTopics];
-      cpy[foundIndex].messages.push(data.payloadString);
+      cpy[foundIndex].messages.push({
+        value: data.payloadString,
+        date: new Date(),
+      });
+      console.log(cpy);
 
       setSubscribedTopics(cpy);
     }
@@ -35,6 +46,7 @@ export default function App() {
     client.connect({
       onSuccess: () => {
         console.log("connected succefully");
+        subscribedTopics.forEach((el) => client.subscribe(el.name));
       },
       onFailure: () => {
         console.log("Connection failed");
@@ -45,14 +57,14 @@ export default function App() {
   const [msg, setMsg] = useState("initial msg");
 
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+    <ScrollView style={{marginTop:StatusBar.currentHeight}}>
+      <Text style={{alignSelf:"center"}}>Welcome to my MQTT!</Text>
       <TextInput
-        style={{ borderWidth: 1, width: "100%" }}
+        style={{ borderWidth: 1, width: "80%",borderRadius:10,margin:5,alignSelf:"center" }}
         onChangeText={(t) => setNewTopic(t)}
       ></TextInput>
       <TouchableOpacity
-        style={{ backgroundColor: "red", padding: 10 }}
+        style={{ backgroundColor: "brown", padding: 10 ,marginRight:20,marginLeft:20,borderRadius:10}}
         onPress={() => {
           setSubscribedTopics((current) => [
             ...current,
@@ -62,18 +74,61 @@ export default function App() {
           client.subscribe(newTopic);
         }}
       >
-        <Text>Subscribe to new topic</Text>
+        <Text style={{color:"white",fontSize:16,textAlign:"center"}}>Subscribe to new topic</Text>
       </TouchableOpacity>
-      {subscribedTopics.map((el, i) => (
-        <View key={i}>
-          <Text>topic name: {el.name}</Text>
-          {el.messages.map((msg, index) => (
-            <Text key={index}>{msg}</Text>
+      <View style={{ height: 500 }}>
+        <ScrollView
+          horizontal
+          style={{ display: "flex", flexDirection: "row" }}
+        >
+          {subscribedTopics.map((el, i) => (
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                borderWidth: 1,
+                borderRadius: 10,
+                marginRight: 5,
+                marginTop: 10,
+                marginLeft: 5,
+                padding: 10,
+              }}
+              key={i}
+            >
+              <Text style={{ color: "red", fontWeight: "500" }}>{el.name}</Text>
+
+              <ScrollView>
+                {el.messages.map((data, index) => (
+                  <View
+                    style={{
+                      borderWidth: 1,
+                      padding: 5,
+                      borderRadius: 5,
+                      backgroundColor: "#efefef",
+                      marginTop: 10,
+                    }}
+                    key={index}
+                  >
+                    <Text>
+                      value :{" "}
+                      <Text style={{ fontSize: 17, fontWeight: "700" }}>
+                        {data.value}
+                      </Text>
+                    </Text>
+                    <Text>
+                      {new Date(data.date).toLocaleDateString() +
+                        " " +
+                        new Date(data.date).toLocaleTimeString()}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
           ))}
-        </View>
-      ))}
+        </ScrollView>
+      </View>
       <StatusBar style="auto" />
-    </View>
+    </ScrollView>
   );
 }
 
