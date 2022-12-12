@@ -1,6 +1,11 @@
 const express = require("express");
 const mqtt = require("mqtt");
 const {
+  getAllResults,
+  getByDates,
+  getTableResults,
+} = require("./requests/getSpecificResults");
+const {
   insertTemperature,
   inserto2,
   insertFrequence,
@@ -10,15 +15,23 @@ const {
 
 const app = express();
 
+
 var client = mqtt.connect("mqtt://broker.mqttdashboard.com", {
   protocolId: "MQIsdp",
   protocolVersion: 3,
 });
+
+client.on("connect", function () {
+  console.log("Connected to mqtt broker");
+});
+
+
 client.subscribe("hc/temp");
 client.subscribe("hc/o2");
 client.subscribe("hc/freq");
 client.subscribe("hc/pres");
 client.subscribe("hc/steps");
+
 
 client.on("message", function (topic, message) {
   switch (topic) {
@@ -40,14 +53,19 @@ client.on("message", function (topic, message) {
   }
 });
 
-client.on("connect", function () {
-  console.log("Connected to mqtt broker");
-});
+
 
 app.use(express.json());
 
 app.get("/", function (req, res) {
   res.send("Hello World!");
+});
+// GET method route
+app.get("/tab/:name", async (req, res) => {
+  res.send(await getTableResults(req.params.name));
+});
+app.post("/specific/:name", async (req, res) => {
+  res.send(await getByDates(req.body.start_date, req.body.end_date,req.params.name));
 });
 
 app.listen(3000, () => console.log("Server started"));
