@@ -3,7 +3,7 @@ const con = mysql.createConnection({
   database: "iotapp",
   host: "localhost",
   user: "root",
-  password: "0000",
+  password: "0000", 
 });
 
 async function getTableResults(table) {
