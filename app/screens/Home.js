@@ -11,6 +11,7 @@ import {
   Linking,
 } from "react-native";
 import Checkbox from "expo-checkbox";
+import ChangeColorsImg from "../components/ChangeColorsImg";
 
 const client = new pahoMqtt.Client(
   "broker.hivemq.com",
@@ -18,13 +19,13 @@ const client = new pahoMqtt.Client(
   `mqtt-random-${parseInt(Math.random() * 100)}`
 );
 
-export default function Home() {
+export default function Home({ navigation }) {
   const [isChecked, setChecked] = useState(false);
   const [newTopic, setNewTopic] = useState("");
   const [maxVal, setMaxVal] = useState(null);
   const [subscribedTopics, setSubscribedTopics] = useState([
     { name: "hc/temp", messages: [], maxValue: 40, alert: true },
-     { name: "hc/freq", messages: [], maxValue: 100, alert: true },
+    { name: "hc/freq", messages: [], maxValue: 100, alert: true },
     { name: "hc/steps", messages: [], maxValue: null, alert: false },
     { name: "hc/o2", messages: [], maxValue: 50, alert: true },
     { name: "hc/pres", messages: [], maxValue: 20, alert: false },
@@ -73,7 +74,10 @@ export default function Home() {
         console.log("Connection failed");
       },
     });
+   
   }, []);
+
+  
 
   return (
     <ScrollView style={{}}>
@@ -166,7 +170,7 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      <View style={{ maxHeight: 500,alignItems:"center" }}>
+      <View style={{ maxHeight: 500, alignItems: "center" }}>
         <ScrollView
           horizontal
           style={{ display: "flex", flexDirection: "row" }}
@@ -188,27 +192,26 @@ export default function Home() {
               }}
               key={i}
             >
-              <Text
-                style={{
-                  color: "brown",
-                  fontWeight: "500",
-                  textAlign: "center",
-                }}
+              <TouchableOpacity
+              style={{padding:15}}
+                onPress={() => navigation.navigate("ChatScreen",{state:{obj:el}})}
               >
-                {el.name}
-              </Text>
+                <Text
+                  style={{
+                    color: "brown",
+                    fontWeight: "500",
+                    textAlign: "center",
+                  }}
+                >
+                  {el.name}
+                </Text>
+              </TouchableOpacity>
 
               <ScrollView nestedScrollEnabled>
                 {el.messages.map((data, index) => (
-                  <View
-                    style={{
-                      borderWidth: 1,
-                      padding: 5,
-                      borderRadius: 5,
-                      backgroundColor: "#efefef",
-                      marginTop: 10,
-                    }}
+                  <ChangeColorsImg
                     key={index}
+                    danger={parseInt(data.value) > el.maxValue && el.maxValue}
                   >
                     <Text>
                       value :{" "}
@@ -230,7 +233,7 @@ export default function Home() {
                         " " +
                         new Date(data.date).toLocaleTimeString()}
                     </Text>
-                  </View>
+                  </ChangeColorsImg>
                 ))}
               </ScrollView>
             </View>
